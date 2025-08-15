@@ -4,7 +4,9 @@ import com.github.rmannibucau.javaccino.fusion.mcp.demo.mcp.model.Capabilities;
 import com.github.rmannibucau.javaccino.fusion.mcp.demo.mcp.model.ClientInfo;
 import com.github.rmannibucau.javaccino.fusion.mcp.demo.mcp.model.InitializeResponse;
 import com.github.rmannibucau.javaccino.fusion.mcp.demo.mcp.model.JsonSchema;
+import com.github.rmannibucau.javaccino.fusion.mcp.demo.mcp.model.ListPromptsResponse;
 import com.github.rmannibucau.javaccino.fusion.mcp.demo.mcp.model.ListToolsResponse;
+import com.github.rmannibucau.javaccino.fusion.mcp.demo.mcp.model.PromptResponse;
 import com.github.rmannibucau.javaccino.fusion.mcp.demo.mcp.model.ToolResponse;
 import com.github.rmannibucau.javaccino.fusion.mcp.demo.model.fusion.OpenRpc;
 import com.github.rmannibucau.javaccino.fusion.mcp.demo.service.OpenRpcService;
@@ -27,14 +29,16 @@ import static java.util.stream.Collectors.toMap;
 
 @ApplicationScoped
 public class MCPJSONRPCProtocol {
-    private final ListToolsResponse tools;
     private final InitializeResponse initializeResponse;
     private final JsonRpcHandler handler;
     private final JsonMapper jsons;
+    private final ListToolsResponse tools;
+    private final ListPromptsResponse prompts;
 
     // for subclassing proxies
     protected MCPJSONRPCProtocol() {
         tools = null;
+        prompts = null;
         initializeResponse = null;
         handler = null;
         jsons = null;
@@ -51,9 +55,9 @@ public class MCPJSONRPCProtocol {
         this.jsons = jsons;
 
         this.tools = new ListToolsResponse(openrpc.methods().values().stream()
-                .filter(it -> !isMcp(it.name()))
+                .filter(it -> it.name().startsWith("tools::"))
                 .map(it -> new ListToolsResponse.Tool(
-                        it.name(),
+                        it.name().substring("tools::".length()),
                         it.description(),
                         new JsonSchema(
                                 it.params().isEmpty(),
@@ -72,11 +76,28 @@ public class MCPJSONRPCProtocol {
                 .toList(),
                 // no pagination since we have a few tools for now
                 null);
+        this.prompts = new ListPromptsResponse(openrpc.methods().values().stream()
+                .filter(it -> it.name().startsWith("prompts::"))
+                .map(it -> new ListPromptsResponse.Prompt(
+                        it.name().substring("prompts::".length()),
+                        it.description(),
+                        // there params are only strings!
+                        it.params().stream()
+                                .map(p -> new ListPromptsResponse.Prompt.Argument(
+                                        p.name(),
+                                        p.schema().description(),
+                                        p.schema().nullable() != null && !p.schema().nullable()
+                                ))
+                                .toList()))
+                .toList(),
+                // no pagination since we have a few prompts for now
+                null);
+
         initializeResponse = new InitializeResponse(
                 "2025-06-18",
                 new InitializeResponse.Capabilities(
                         null,
-                        null,
+                        new InitializeResponse.Prompts(false),
                         null,
                         new InitializeResponse.Tools(false)),
                 new InitializeResponse.ServerInfo("fusion-demo", "Fusion Demo", "1.0.0"),
@@ -125,6 +146,12 @@ public class MCPJSONRPCProtocol {
         return tools;
     }
 
+    @JsonRpc("prompts/list")
+    public ListPromptsResponse listPrompts(
+            @JsonRpcParam final String cursor) {
+        return prompts;
+    }
+
     @JsonRpc("tools/call")
     public CompletionStage<ToolResponse> callTool(@JsonRpcParam final String name,
                                                   @JsonRpcParam final Object arguments,
@@ -132,12 +159,45 @@ public class MCPJSONRPCProtocol {
         return handler
                 .execute(Map.of(
                         "jsonrpc", "2.0",
-                        "method", name,
+                        "method", "tools::" + name,
                         "params", arguments
                 ), httpRequest)
-                .thenApply(res -> res instanceof Response jsonRpcResponse && jsonRpcResponse.result() != null ?
-                        ToolResponse.structure(jsons, jsonRpcResponse.result())
-                        : new ToolResponse(true, List.of(), null));
+                .thenApply(res -> {
+                    if (res instanceof Response r && r.result() instanceof ToolResponse tr) {
+                        return ToolResponse.structure(jsons, tr);
+                    }
+
+                    if (res instanceof Response r && r.error() != null) {
+                        throw new JsonRpcException(r.error().code(), r.error().message(), r.error().message(), null);
+                    }
+
+                    // unlikely
+                    throw new JsonRpcException(-32603, "Unexpected result");
+                });
+    }
+
+    @JsonRpc("prompts/get")
+    public CompletionStage<PromptResponse> callPrompt(@JsonRpcParam final String name,
+                                                      @JsonRpcParam final Map<String, Object> arguments,
+                                                      final Request httpRequest) {
+        return handler
+                .execute(Map.of(
+                        "jsonrpc", "2.0",
+                        "method", "prompts::" + name,
+                        "params", arguments
+                ), httpRequest)
+                .thenApply(res -> {
+                    if (res instanceof Response r && r.result() instanceof PromptResponse pr) {
+                        return pr;
+                    }
+
+                    if (res instanceof Response r && r.error() != null) {
+                        throw new JsonRpcException(r.error().code(), r.error().message(), r.error().message(), null);
+                    }
+
+                    // unlikely
+                    throw new JsonRpcException(-32603, "Unexpected result");
+                });
     }
 
     private JsonSchema toMcpSchema(final OpenRpc.JsonSchema schema) {

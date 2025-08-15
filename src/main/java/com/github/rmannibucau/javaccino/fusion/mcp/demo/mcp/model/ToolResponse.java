@@ -14,11 +14,4 @@ public record ToolResponse(
     public static ToolResponse structure(final JsonMapper jsonMapper, final Object data) {
         return new ToolResponse(false, List.of(Content.text(jsonMapper.toString(data))), data);
     }
-
-    @JsonModel
-    public record Content(String type, String text) {
-        public static Content text(final String text) {
-            return new Content("text", text);
-        }
-    }
 }
