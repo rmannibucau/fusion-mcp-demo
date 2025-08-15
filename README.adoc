@@ -1,0 +1,5 @@
+= Fusion MCP server
+
+Simple Model Context Protocol (MCP) server using Yupiik Fusion JSON-RPC API.
+
+TIP: it can be native-compiled with GraalVM is desired.
