@@ -68,7 +68,11 @@ public class MCPJSONRPCProtocol {
                                                 p -> toMcpSchema(
                                                         ofNullable(openRpcService.resolveRefs(schemas, p.schema()))
                                                                 .orElse(p.schema())))),
-                                List.of() // todo: add in @JsonRpcParam
+                                it.params().stream()
+                                        .filter(p -> p.required() != null && p.required())
+                                        .map(OpenRpc.JsonRpcMethod.Parameter::name)
+                                        .sorted()
+                                        .toList()
                         ),
                         registry.methods().get(it.name()).isNotification() || it.result() == null || it.result().schema() == null || "null".equals(it.result().schema().type()) ?
                                 null :

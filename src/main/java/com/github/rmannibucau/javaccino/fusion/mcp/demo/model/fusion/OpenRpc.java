@@ -22,7 +22,8 @@ public record OpenRpc(
         @JsonModel
         public record Parameter(
                 String name,
-                JsonSchema schema
+                JsonSchema schema,
+                Boolean required
         ) {}
     }
 
