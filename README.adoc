@@ -3,3 +3,5 @@
 Simple Model Context Protocol (MCP) server using Yupiik Fusion JSON-RPC API.
 
 TIP: it can be native-compiled with GraalVM is desired.
+
+You can run it with `mvn package exec:exec` and configure `http://localhost:8080/mcp` as MCP server.

@@ -105,6 +105,11 @@
           <artifactId>maven-compiler-plugin</artifactId>
           <version>3.14.0</version>
         </plugin>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>exec-maven-plugin</artifactId>
+          <version>3.5.1</version>
+        </plugin>
       </plugins>
     </pluginManagement>
     <plugins>
@@ -127,9 +132,14 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>
-        <version>3.5.1</version>
         <configuration>
-
+          <executable>java</executable>
+          <arguments>
+            <argument>-Djava.util.logging.manager=io.yupiik.logging.jul.YupiikLogManager</argument>
+            <argument>-classpath</argument>
+            <classpath/>
+            <argument>io.yupiik.fusion.framework.api.main.Launcher</argument>
+          </arguments>
         </configuration>
       </plugin>
     </plugins>
