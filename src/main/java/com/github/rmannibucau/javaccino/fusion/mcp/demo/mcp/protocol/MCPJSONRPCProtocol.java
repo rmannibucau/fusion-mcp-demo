@@ -107,15 +107,18 @@ public class MCPJSONRPCProtocol {
     // https://modelcontextprotocol.io/specification/2025-06-18/basic/lifecycle
     @JsonRpc("initialize")
     public InitializeResponse initialize(
-            @JsonRpcParam final String protocolVersion,
+            @JsonRpcParam(required = true) final String protocolVersion,
             @JsonRpcParam final Capabilities capabilities,
             @JsonRpcParam final ClientInfo clientInfo
     ) {
-        if (!initializeResponse.protocolVersion().equals(protocolVersion)) {
+        if (!protocolVersion.startsWith("2025")) {
             throw new JsonRpcException(-32602, "Unsupported protocol version", Map.of(
                     "supported", List.of(initializeResponse.protocolVersion()),
                     "requested", protocolVersion
             ), null);
+        }
+        if (!initializeResponse.protocolVersion().equals(protocolVersion)) { // minimum compat - to improve
+            return new InitializeResponse(protocolVersion, initializeResponse.capabilities(), initializeResponse.serverInfo(), initializeResponse.instructions());
         }
         return initializeResponse;
     }
