@@ -103,6 +103,9 @@ class MCPJSONRPCProtocolTest {
                           "id": 1,
                           "result": {
                             "capabilities": {
+                              "prompts": {
+                                "listChanged": false
+                              },
                               "tools": {
                                 "listChanged": false
                               }
@@ -146,13 +149,13 @@ class MCPJSONRPCProtocolTest {
                               {
                                 "description": "Demo.",
                                 "inputSchema": {
-                                  "description": "Input request for demo",
+                                  "description": "Input request for demo/tool",
                                   "nullable": true,
                                   "properties": {},
                                   "required": [],
                                   "type": "object"
                                 },
-                                "name": "demo",
+                                "name": "demo/tool",
                                 "outputSchema": {
                                   "properties": {
                                     "greeting": {
@@ -179,7 +182,7 @@ class MCPJSONRPCProtocolTest {
                                   "id": 1,
                                   "method": "tools/call",
                                   "params": {
-                                    "name": "demo",
+                                    "name": "demo/tool",
                                     "arguments": {}
                                   }
                                 }"""))

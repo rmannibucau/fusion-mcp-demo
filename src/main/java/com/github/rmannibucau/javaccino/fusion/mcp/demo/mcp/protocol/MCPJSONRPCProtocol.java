@@ -55,9 +55,9 @@ public class MCPJSONRPCProtocol {
         this.jsons = jsons;
 
         this.tools = new ListToolsResponse(openrpc.methods().values().stream()
-                .filter(it -> it.name().startsWith("tools::"))
+                .filter(it -> "tool".equals(registry.methods().get(it.name()).metadata().getOrDefault("mcp.type", "")))
                 .map(it -> new ListToolsResponse.Tool(
-                        it.name().substring("tools::".length()),
+                        it.name(),
                         it.description(),
                         new JsonSchema(
                                 it.params().isEmpty(),
@@ -77,9 +77,9 @@ public class MCPJSONRPCProtocol {
                 // no pagination since we have a few tools for now
                 null);
         this.prompts = new ListPromptsResponse(openrpc.methods().values().stream()
-                .filter(it -> it.name().startsWith("prompts::"))
+                .filter(it -> "prompt".equals(registry.methods().get(it.name()).metadata().getOrDefault("mcp.type", "")))
                 .map(it -> new ListPromptsResponse.Prompt(
-                        it.name().substring("prompts::".length()),
+                        it.name(),
                         it.description(),
                         // there params are only strings!
                         it.params().stream()
@@ -97,9 +97,9 @@ public class MCPJSONRPCProtocol {
                 "2025-06-18",
                 new InitializeResponse.Capabilities(
                         null,
-                        new InitializeResponse.Prompts(false),
+                        prompts.prompts().isEmpty() ? null : new InitializeResponse.Prompts(false),
                         null,
-                        new InitializeResponse.Tools(false)),
+                        tools.tools().isEmpty() ? null : new InitializeResponse.Tools(false)),
                 new InitializeResponse.ServerInfo("fusion-demo", "Fusion Demo", "1.0.0"),
                 "Use demo tool");
     }
@@ -159,20 +159,17 @@ public class MCPJSONRPCProtocol {
         return handler
                 .execute(Map.of(
                         "jsonrpc", "2.0",
-                        "method", "tools::" + name,
+                        "method", name,
                         "params", arguments
                 ), httpRequest)
                 .thenApply(res -> {
-                    if (res instanceof Response r && r.result() instanceof ToolResponse tr) {
-                        return ToolResponse.structure(jsons, tr);
+                    if (res instanceof Response r && r.result() != null) {
+                        if (r.result() instanceof ToolResponse tr) {
+                            return tr;
+                        }
+                        return ToolResponse.structure(jsons, r.result());
                     }
-
-                    if (res instanceof Response r && r.error() != null) {
-                        throw new JsonRpcException(r.error().code(), r.error().message(), r.error().message(), null);
-                    }
-
-                    // unlikely
-                    throw new JsonRpcException(-32603, "Unexpected result");
+                    return onError(res);
                 });
     }
 
@@ -183,21 +180,24 @@ public class MCPJSONRPCProtocol {
         return handler
                 .execute(Map.of(
                         "jsonrpc", "2.0",
-                        "method", "prompts::" + name,
+                        "method", name,
                         "params", arguments
                 ), httpRequest)
                 .thenApply(res -> {
                     if (res instanceof Response r && r.result() instanceof PromptResponse pr) {
                         return pr;
                     }
-
-                    if (res instanceof Response r && r.error() != null) {
-                        throw new JsonRpcException(r.error().code(), r.error().message(), r.error().message(), null);
-                    }
-
-                    // unlikely
-                    throw new JsonRpcException(-32603, "Unexpected result");
+                    return onError(res);
                 });
+    }
+
+    private <T> T onError(final Object res) {
+        if (res instanceof Response r && r.error() != null) {
+            throw new JsonRpcException(r.error().code(), r.error().message(), r.error().message(), null);
+        }
+
+        // unlikely
+        throw new JsonRpcException(-32603, "Unexpected result");
     }
 
     private JsonSchema toMcpSchema(final OpenRpc.JsonSchema schema) {
