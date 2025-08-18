@@ -4,7 +4,7 @@
          xsi:schemaLocation="
          http://maven.apache.org/POM/4.1.0
          https://maven.apache.org/xsd/maven-4.1.0.xsd">
-  <groupId>com.yupiik.meecrogate</groupId>
+  <groupId>io.yupiik.fusion.mcp</groupId>
   <artifactId>fusion-mcp-demo</artifactId>
   <version>1.0-SNAPSHOT</version>
 
