@@ -11,12 +11,27 @@ import static java.util.Optional.ofNullable;
 public class MCPSession implements Serializable {
     private LoggingLevel loggingLevel = LoggingLevel.info;
 
+    // todo: ensure there is some session affinity otherwise this will fail
+    private volatile SseBus sse;
+
     public void setLoggingLevel(final LoggingLevel loggingLevel) {
         this.loggingLevel = loggingLevel;
     }
 
-    public final LoggingLevel getLoggingLevel() {
+    public LoggingLevel getLoggingLevel() {
         return loggingLevel;
+    }
+
+    // todo: add a session listener to auto disconnect
+    public SseBus newSse() {
+        if (sse != null) {
+            sse.cancel();
+        }
+        return sse = new SseBus();
+    }
+
+    public SseBus sse() {
+        return sse;
     }
 
     public static class Accessor {

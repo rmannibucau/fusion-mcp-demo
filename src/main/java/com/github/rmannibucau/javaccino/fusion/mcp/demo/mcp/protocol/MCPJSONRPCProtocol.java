@@ -144,15 +144,17 @@ public class MCPJSONRPCProtocol {
 
     @JsonRpc("notifications/initialized")
     public void onInitialize(@JsonRpcParam("_meta") final Metadata metadata, final Request request) {
-        if (initializeResponse.capabilities().logging() != null) {
-            MCPSession.Accessor.create(request);
-        }
+        MCPSession.Accessor.create(request);
     }
 
     @JsonRpc("notifications/cancelled")
     public void onCancelled(@JsonRpcParam final String reason,
-                            @JsonRpcParam final String requestId) {
-        // no-op
+                            @JsonRpcParam final String requestId,
+                            final Request request) {
+        final var sse = MCPSession.Accessor.get(request).sse();
+        if (sse != null) {
+            sse.cancel();
+        }
     }
 
     @JsonRpc("notifications/progress")
