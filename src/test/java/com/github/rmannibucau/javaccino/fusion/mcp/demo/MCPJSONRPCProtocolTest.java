@@ -165,7 +165,8 @@ class MCPJSONRPCProtocolTest {
                                   },
                                   "required": [],
                                   "type": "object"
-                                }
+                                },
+                                "title": "demo/tool"
                               }
                             ]
                           }

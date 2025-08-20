@@ -2,6 +2,8 @@ package com.github.rmannibucau.javaccino.fusion.mcp.demo.mcp.model;
 
 import io.yupiik.fusion.framework.build.api.json.JsonModel;
 
+import java.util.Map;
+
 @JsonModel
 public record InitializeResponse(
         String protocolVersion,
@@ -11,15 +13,13 @@ public record InitializeResponse(
 ) {
     @JsonModel
     public record Capabilities(
-            Logging logging,
+            Map<String, Object> logging,
             Prompts prompts,
             Resources resources,
-            Tools tools
+            Tools tools,
+            Map<String, Object> completions,
+            Map<String, Object> experimental
     ) {
-    }
-
-    @JsonModel
-    public record Logging() {
     }
 
     @JsonModel
