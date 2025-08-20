@@ -6,19 +6,19 @@ import io.yupiik.fusion.framework.build.api.json.JsonProperty;
 import java.util.List;
 
 @JsonModel
-public record ListToolsResponse(
-        List<Tool> tools,
+public record ListResourcesResponse(
+        List<Resource> resources,
         String nextCursor
 ) {
     @JsonModel
-    public record Tool(
+    public record Resource(
             @JsonProperty("_meta") Metadata metadata,
             Annotations annotations,
-            String title,
-            String name,
             String description,
-            JsonSchema inputSchema,
-            JsonSchema outputSchema
-    ) {
-    }
+            String mimeType,
+            String name,
+            String title,
+            String uri,
+            Long size
+    ) {}
 }

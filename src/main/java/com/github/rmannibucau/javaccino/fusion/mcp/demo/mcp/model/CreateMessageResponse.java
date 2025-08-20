@@ -3,17 +3,12 @@ package com.github.rmannibucau.javaccino.fusion.mcp.demo.mcp.model;
 import io.yupiik.fusion.framework.build.api.json.JsonModel;
 import io.yupiik.fusion.framework.build.api.json.JsonProperty;
 
-import java.util.List;
-
 @JsonModel
-public record PromptResponse(
+public record CreateMessageResponse(
         @JsonProperty("_meta") Metadata metadata,
-        String description,
-        List<Message> messages
+        Content content,
+        String model,
+        Role role,
+        String stopReason
 ) {
-    @JsonModel
-    public record Message(
-            Role role,
-            Content content
-    ) {}
 }
